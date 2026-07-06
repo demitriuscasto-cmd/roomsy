@@ -129,7 +129,7 @@ h1,h2,h3{letter-spacing:-.022em;line-height:1.07;font-weight:700}
 .hidden{display:none!important}
 .lead-field{margin-bottom:12px;text-align:left}
 .lead-field label{display:block;font-size:13px;font-weight:600;color:var(--gray);margin-bottom:5px}
-.lead-field input{width:100%;border:1px solid var(--hairline);background:var(--bg-soft);border-radius:14px;padding:15px 18px;font-size:16.5px;font-family:var(--font);color:var(--ink)}
+.lead-field input,.lead-field select{width:100%;border:1px solid var(--hairline);background:var(--bg-soft);border-radius:14px;padding:15px 18px;font-size:16.5px;font-family:var(--font);color:var(--ink)}
 .lead-consent{font-size:11.5px;color:var(--gray);line-height:1.5;margin-top:12px;text-align:center}
 </style>
 </head>
@@ -222,19 +222,39 @@ const AFFINITY = {
 };
 const compat = (u,o)=> u ? (AFFINITY[u]&&AFFINITY[u][o])||65 : null;
 const PROFILES = [
-  {id:1,name:'Maya',age:24,area:'Allston',type:'homebody',budget:'$900–1,100',move:'Sept 1',bio:'Grad student, plant parent, weekend baker. Looking for a calm 2BR.',tags:['No smoking','Cat friendly','Early sleeper']},
-  {id:2,name:'Jordan',age:27,area:'Dorchester',type:'keeper',budget:'$1,000–1,300',move:'Aug 15',bio:'Nurse on day shifts. I keep things tidy and expect the same. Sunday meal prepper.',tags:['Very clean','Quiet weekdays','Gym rat']},
-  {id:3,name:'Sam',age:23,area:'Brighton',type:'host',budget:'$800–1,000',move:'Sept 1',bio:'Marketing coordinator. I host a monthly dinner party — you\u2019re invited.',tags:['Social','Foodie','Dog friendly']},
-  {id:4,name:'Priya',age:26,area:'Cambridge',type:'earlybird',budget:'$1,200–1,500',move:'Flexible',bio:'Biotech researcher, 6am runner. In bed by 10, up with the sun.',tags:['Early riser','Runner','No parties']},
-  {id:5,name:'Deshawn',age:25,area:'Quincy',type:'nightowl',budget:'$900–1,200',move:'Oct 1',bio:'Software dev, remote. Quiet during the day, creative at night. Headphones always.',tags:['Remote worker','Gamer','Considerate']},
-  {id:6,name:'Alex',age:28,area:'Somerville',type:'spirit',budget:'$1,000–1,400',move:'Sept 1',bio:'Travel photographer, gone half the month. Easygoing about basically everything.',tags:['Often traveling','Flexible','Artist']},
-  {id:7,name:'Grace',age:24,area:'Jamaica Plain',type:'homebody',budget:'$850–1,050',move:'Aug 20',bio:'Teacher. Quiet nights, loud laughter, strong tea opinions.',tags:['LGBTQ+ friendly','Book club','No smoking']},
-  {id:8,name:'Marcus',age:29,area:'Medford',type:'keeper',budget:'$1,100–1,400',move:'Sept 15',bio:'Navy vet, now in project management. Structured, respectful, drama-free.',tags:['Veteran','Very clean','Early riser']}
+  {id:1,name:'Maya',age:24,area:'Allston',lat:42.3505,lng:-71.1329,type:'homebody',budget:'$900–1,100',move:'Sept 1',bio:'Grad student, plant parent, weekend baker. Looking for a calm 2BR.',tags:['No smoking','Cat friendly','Early sleeper']},
+  {id:2,name:'Jordan',age:27,area:'Dorchester',lat:42.2911,lng:-71.0662,type:'keeper',budget:'$1,000–1,300',move:'Aug 15',bio:'Nurse on day shifts. I keep things tidy and expect the same. Sunday meal prepper.',tags:['Very clean','Quiet weekdays','Gym rat']},
+  {id:3,name:'Sam',age:23,area:'Brighton',lat:42.3496,lng:-71.1503,type:'host',budget:'$800–1,000',move:'Sept 1',bio:'Marketing coordinator. I host a monthly dinner party — you\u2019re invited.',tags:['Social','Foodie','Dog friendly']},
+  {id:4,name:'Priya',age:26,area:'Cambridge',lat:42.3736,lng:-71.1097,type:'earlybird',budget:'$1,200–1,500',move:'Flexible',bio:'Biotech researcher, 6am runner. In bed by 10, up with the sun.',tags:['Early riser','Runner','No parties']},
+  {id:5,name:'Deshawn',age:25,area:'Quincy',lat:42.2529,lng:-71.0023,type:'nightowl',budget:'$900–1,200',move:'Oct 1',bio:'Software dev, remote. Quiet during the day, creative at night. Headphones always.',tags:['Remote worker','Gamer','Considerate']},
+  {id:6,name:'Alex',age:28,area:'Somerville',lat:42.3876,lng:-71.0995,type:'spirit',budget:'$1,000–1,400',move:'Sept 1',bio:'Travel photographer, gone half the month. Easygoing about basically everything.',tags:['Often traveling','Flexible','Artist']},
+  {id:7,name:'Grace',age:24,area:'Jamaica Plain',lat:42.3097,lng:-71.1151,type:'homebody',budget:'$850–1,050',move:'Aug 20',bio:'Teacher. Quiet nights, loud laughter, strong tea opinions.',tags:['LGBTQ+ friendly','Book club','No smoking']},
+  {id:8,name:'Marcus',age:29,area:'Medford',lat:42.4184,lng:-71.1061,type:'keeper',budget:'$1,100–1,400',move:'Sept 15',bio:'Navy vet, now in project management. Structured, respectful, drama-free.',tags:['Veteran','Very clean','Early riser']}
 ];
 const GRAD = {1:['#5A8F6F','#8FBF9F'],2:['#3A8F8A','#6FC4BF'],3:['#E8705A','#F2A48F'],4:['#E8A13A','#F2C878'],5:['#4A5A8F','#8593C4'],6:['#B45AA0','#D693C9'],7:['#5A8F6F','#A8C6B2'],8:['#1B2A3B','#4A6076']};
+const US_STATES={Alabama:'AL',Alaska:'AK',Arizona:'AZ',Arkansas:'AR',California:'CA',Colorado:'CO',Connecticut:'CT',Delaware:'DE',Florida:'FL',Georgia:'GA',Hawaii:'HI',Idaho:'ID',Illinois:'IL',Indiana:'IN',Iowa:'IA',Kansas:'KS',Kentucky:'KY',Louisiana:'LA',Maine:'ME',Maryland:'MD',Massachusetts:'MA',Michigan:'MI',Minnesota:'MN',Mississippi:'MS',Missouri:'MO',Montana:'MT',Nebraska:'NE',Nevada:'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND',Ohio:'OH',Oklahoma:'OK',Oregon:'OR',Pennsylvania:'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD',Tennessee:'TN',Texas:'TX',Utah:'UT',Vermont:'VT',Virginia:'VA',Washington:'WA','West Virginia':'WV',Wisconsin:'WI',Wyoming:'WY','District of Columbia':'DC'};
+function haversineMiles(lat1,lng1,lat2,lng2){
+  const toRad=d=>d*Math.PI/180, R=3958.8;
+  const dLat=toRad(lat2-lat1), dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+async function geocodeArea(q){
+  const url=`https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&countrycodes=us&q=${encodeURIComponent(q)}`;
+  const res=await fetch(url);
+  if(!res.ok)throw new Error('geocode request failed');
+  const data=await res.json();
+  return data.length?data[0]:null;
+}
+function shortLocationName(result){
+  const a=result.address||{};
+  const city=a.city||a.town||a.village||a.hamlet||a.county||'';
+  const state=a.state?(US_STATES[a.state]||a.state):'';
+  return [city,state].filter(Boolean).join(', ')||result.display_name;
+}
 
 /* ── State ────────────────────────────────────────────── */
-let page='home', qi=0, scores={}, result=null, filter='all';
+let page='home', qi=0, scores={}, result=null, filter='all', radiusOnly=false, locBannerDismissed=false;
 let userType=null; try{userType=localStorage.getItem('roomsy_type')||null}catch(e){}
 
 /* ── Helpers ──────────────────────────────────────────── */
@@ -424,16 +444,38 @@ async function loadRealProfiles(){
     realProfiles = (data||[]).map(p => ({
       id:'u-'+p.id, name:p.name, age:p.age||'', area:p.area||'', type:p.type||'spirit',
       budget:p.budget||'', move:p.move_date||'TBD', bio:p.bio||'', tags:['Verified soon'],
-      photo_url:p.photo_url, real:true
+      photo_url:p.photo_url, lat:p.lat, lng:p.lng, real:true
     }));
   }catch(e){ realProfiles=[]; }
 }
+async function ensureMyProfile(){
+  if(!db || !session){ myProfile=null; return; }
+  if(myProfile) return;
+  try{ const {data}=await db.from('profiles').select('*').eq('id',session.user.id).maybeSingle(); myProfile=data||{}; }
+  catch(e){ myProfile={}; }
+}
 function renderBrowse(){
   if(db && session && !realProfiles.length){ loadRealProfiles().then(()=>{ if(page==='browse'&&realProfiles.length)renderBrowse(); }); }
+  if(db && session && !myProfile){ ensureMyProfile().then(()=>{ if(page==='browse')renderBrowse(); }); }
+  const viewerLat=myProfile&&myProfile.lat!=null?myProfile.lat:null;
+  const viewerLng=myProfile&&myProfile.lng!=null?myProfile.lng:null;
+  const viewerRadius=(myProfile&&myProfile.radius_miles)||25;
   const source=[...realProfiles, ...PROFILES];
-  let list=source.map(p=>({...p,score:compat(userType,p.type)}));
+  let list=source.map(p=>({...p,score:compat(userType,p.type),
+    dist:(viewerLat!=null&&p.lat!=null&&p.lng!=null)?haversineMiles(viewerLat,viewerLng,p.lat,p.lng):null}));
   if(filter!=='all')list=list.filter(p=>p.type===filter);
-  if(userType)list.sort((a,b)=>b.score-a.score);
+  if(radiusOnly&&viewerLat!=null)list=list.filter(p=>p.dist!=null&&p.dist<=viewerRadius);
+  if(viewerLat!=null){
+    list.sort((a,b)=>{
+      const aIn=(a.dist!=null&&a.dist<=viewerRadius)?0:1, bIn=(b.dist!=null&&b.dist<=viewerRadius)?0:1;
+      if(aIn!==bIn)return aIn-bIn;
+      const as=a.score??-1, bs=b.score??-1;
+      if(bs!==as)return bs-as;
+      return (a.dist??Infinity)-(b.dist??Infinity);
+    });
+  }else if(userType){
+    list.sort((a,b)=>b.score-a.score);
+  }
   view.innerHTML=`
   <div class="wrap">
     <div class="browse-hero">
@@ -441,15 +483,21 @@ function renderBrowse(){
       ${userType
         ?`<p>Sorted by fit with <strong>${TYPES[userType].emoji} ${TYPES[userType].name}</strong></p>`
         :`<p>Take the quiz to unlock your match scores. <button class="btn btn-quiet" style="padding:0;font-size:17px" data-go="quiz">Take it now ›</button></p>`}
+      ${(viewerLat==null&&!locBannerDismissed)?`
+      <div class="demo-banner" style="display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left">
+        <span>Set your location to see distances → <button data-go="profile" style="background:none;border:none;color:var(--accent);font-weight:600;text-decoration:underline">My profile</button></span>
+        <button id="loc-banner-x" aria-label="Dismiss" style="background:none;border:none;color:var(--gray);font-size:16px;line-height:1">✕</button>
+      </div>`:''}
     </div>
     <div class="filters">
       <button class="filter${filter==='all'?' active':''}" data-filter="all">All</button>
       ${Object.values(TYPES).map(t=>`<button class="filter${filter===t.key?' active':''}" data-filter="${t.key}">${t.emoji} ${t.name}</button>`).join('')}
+      ${viewerLat!=null?`<button class="filter${radiusOnly?' active':''}" data-radius-toggle>Within my radius (${viewerRadius} mi)</button>`:''}
     </div>
     <div class="grid">
       ${list.map(p=>`
       <div class="card">
-        <div class="card-top">${avatar(p)}<div><h3>${esc(p.name||'')}${p.age?', '+p.age:''}</h3><div class="meta">${esc(p.area||'')} · Moves ${esc(String(p.move||'TBD'))}${p.real?'':' · Demo'}</div></div></div>
+        <div class="card-top">${avatar(p)}<div><h3>${esc(p.name||'')}${p.age?', '+p.age:''}</h3><div class="meta">${esc(p.area||'')}${p.dist!=null?' · '+Math.round(p.dist)+' mi':''} · Moves ${esc(String(p.move||'TBD'))}${p.real?'':' · Demo'}</div></div></div>
         ${pill(p.type)}
         <p class="bio">${esc(p.bio)}</p>
         <div class="tag-row">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
@@ -461,7 +509,9 @@ function renderBrowse(){
     </div>
   </div>`;
   view.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderBrowse()});
+  view.querySelectorAll('[data-radius-toggle]').forEach(b=>b.onclick=()=>{radiusOnly=!radiusOnly;renderBrowse()});
   view.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openModal(b.dataset.open));
+  const bx=document.getElementById('loc-banner-x'); if(bx)bx.onclick=()=>{locBannerDismissed=true;renderBrowse()};
 }
 
 function openModal(id){
@@ -595,7 +645,9 @@ async function renderProfile(){
   let p={};
   try{const {data}=await db.from('profiles').select('*').eq('id',session.user.id).maybeSingle();p=data||{}}catch(e){}
   myProfile=p;
+  let pendingLat=p.lat??null, pendingLng=p.lng??null;
   const t=p.type&&TYPES[p.type]?TYPES[p.type]:null;
+  const radiusOpts=[5,10,25,50,100];
   view.innerHTML=`
   <div class="wrap"><div class="quiz-shell" style="padding-top:36px">
     <h1 style="font-size:clamp(28px,7vw,40px);letter-spacing:-.028em;text-align:center;margin-bottom:6px">My profile</h1>
@@ -613,6 +665,15 @@ async function renderProfile(){
     <div class="lead-field"><label>Budget range</label><input id="pf-budget" value="${(p.budget||'').replace(/"/g,'&quot;')}" placeholder="e.g. $900–1,200"/></div>
     <div class="lead-field"><label>Move date</label><input id="pf-move" value="${(p.move_date||'').replace(/"/g,'&quot;')}" placeholder="e.g. Sept 1"/></div>
     <div class="lead-field"><label>Bio</label><input id="pf-bio" value="${(p.bio||'').replace(/"/g,'&quot;')}" placeholder="A line or two about how you live"/></div>
+    <div style="margin:26px 0 6px;padding-top:20px;border-top:1px solid var(--hairline)">
+      <h3 style="font-size:17px;margin-bottom:14px">Where do you want to live?</h3>
+      <div class="lead-field"><label>Target area</label><input id="pf-loc-query" value="${(p.area||'').replace(/"/g,'&quot;')}" placeholder="e.g. Quincy, MA"/></div>
+      <button class="btn btn-dark btn-sm" type="button" id="pf-loc-set">Set location</button>
+      <div id="pf-loc-status" style="font-size:13px;margin-top:10px;min-height:18px;line-height:1.4"></div>
+      <div class="lead-field" style="margin-top:14px"><label>Show me people within</label>
+        <select id="pf-radius">${radiusOpts.map(r=>`<option value="${r}"${(p.radius_miles||25)===r?' selected':''}>${r} miles</option>`).join('')}</select>
+      </div>
+    </div>
     <div id="pf-err" style="color:#D93838;font-size:13px;min-height:18px;text-align:center"></div>
     <button class="btn btn-primary btn-lg" id="pf-save" style="width:100%">Save profile</button>
     <div style="text-align:center;margin-top:18px"><button class="btn btn-quiet btn-sm" id="pf-out">Sign out</button></div>
@@ -635,6 +696,31 @@ async function renderProfile(){
       status.textContent='Photo saved ✓';realProfiles=[];
     }catch(ex){status.textContent='Upload failed — try a smaller photo.'}
   };
+  $g('pf-loc-set').onclick=async()=>{
+    const q=$g('pf-loc-query').value.trim();
+    const statusEl=$g('pf-loc-status'), btn=$g('pf-loc-set');
+    if(!q){statusEl.style.color='#D93838';statusEl.textContent='Type an area first.';return}
+    btn.disabled=true;btn.textContent='Searching…';
+    statusEl.style.color='var(--gray)';statusEl.textContent='Looking that up…';
+    try{
+      const result=await geocodeArea(q);
+      if(!result){
+        statusEl.style.color='#D93838';
+        statusEl.textContent='Couldn’t find that — try adding a state, like “Quincy, MA”.';
+      }else{
+        pendingLat=parseFloat(result.lat);pendingLng=parseFloat(result.lon);
+        const short=shortLocationName(result);
+        $g('pf-loc-query').value=short;
+        const areaEl=$g('pf-area');if(areaEl)areaEl.value=short;
+        statusEl.style.color='var(--accent)';
+        statusEl.textContent='📍 '+result.display_name;
+      }
+    }catch(ex){
+      statusEl.style.color='#D93838';
+      statusEl.textContent='Couldn’t find that — try adding a state, like “Quincy, MA”.';
+    }
+    btn.disabled=false;btn.textContent='Set location';
+  };
   $g('pf-save').onclick=async()=>{
     const btn=$g('pf-save');btn.disabled=true;btn.textContent='Saving…';
     try{
@@ -646,7 +732,10 @@ async function renderProfile(){
         budget:$g('pf-budget').value.trim(),
         move_date:$g('pf-move').value.trim(),
         bio:$g('pf-bio').value.trim(),
-        type:userType||myProfile.type||null
+        type:userType||myProfile.type||null,
+        lat:pendingLat,
+        lng:pendingLng,
+        radius_miles:parseInt($g('pf-radius').value)||25
       });
       if(error)throw error;
       btn.textContent='Saved ✓';realProfiles=[];
