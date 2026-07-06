@@ -209,9 +209,25 @@ function handleAuthRedirect(){
   showToast(msg);
   go('profile');
 }
+async function learnUserTypeFromProfile(){
+  if(!db || !session || userType) return false;
+  await ensureMyProfile();
+  if(myProfile && myProfile.type && TYPES[myProfile.type]){
+    userType = myProfile.type;
+    try{localStorage.setItem('roomsy_type', userType)}catch(e){}
+    return true;
+  }
+  return false;
+}
 if(db){
-  db.auth.getSession().then(({data}) => { session = data.session; updateAuthNav(); handleAuthRedirect(); });
-  db.auth.onAuthStateChange((_e, s2) => { session = s2; updateAuthNav(); });
+  db.auth.getSession().then(({data}) => {
+    session = data.session; updateAuthNav(); handleAuthRedirect();
+    learnUserTypeFromProfile().then(learned => { if(learned) renderPage(); });
+  });
+  db.auth.onAuthStateChange((_e, s2) => {
+    session = s2; updateAuthNav();
+    if(session) learnUserTypeFromProfile().then(learned => { if(learned) renderPage(); });
+  });
 }
 function updateAuthNav(){
   const b = document.getElementById('nav-auth');
@@ -450,6 +466,10 @@ function renderQuiz(){
       userType=result;
       try{localStorage.setItem('roomsy_type',result)}catch(e){}
       renderQuiz();window.scrollTo({top:0});
+      if(db && session){
+        if(myProfile) myProfile.type=result;
+        (async()=>{ try{ await db.from('profiles').upsert({id:session.user.id,type:result}); }catch(e){} })();
+      }
     }
   });
 }
@@ -794,12 +814,15 @@ function go(p){
   }
   if(p==='quiz'&&!hasLead()){showLeadGate();return}
   page=p;window.scrollTo({top:0});
-  if(p==='home')renderHome();
-  else if(p==='quiz')renderQuiz();
-  else if(p==='browse')renderBrowse();
-  else if(p==='profile'){ if(!session){showAuthModal('signup');page='home';renderHome();} else renderProfile(); }
-  else if(p==='safety')renderSafety();
+  renderPage();
   updateNav();
+}
+function renderPage(){
+  if(page==='home')renderHome();
+  else if(page==='quiz')renderQuiz();
+  else if(page==='browse')renderBrowse();
+  else if(page==='profile'){ if(!session){showAuthModal('signup');page='home';renderHome();} else renderProfile(); }
+  else if(page==='safety')renderSafety();
 }
 function updateNav(){
   document.querySelector('[data-navquiz]').classList.toggle('active',page==='quiz');
