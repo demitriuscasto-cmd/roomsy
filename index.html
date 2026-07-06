@@ -131,6 +131,8 @@ h1,h2,h3{letter-spacing:-.022em;line-height:1.07;font-weight:700}
 .lead-field label{display:block;font-size:13px;font-weight:600;color:var(--gray);margin-bottom:5px}
 .lead-field input,.lead-field select{width:100%;border:1px solid var(--hairline);background:var(--bg-soft);border-radius:14px;padding:15px 18px;font-size:16.5px;font-family:var(--font);color:var(--ink)}
 .lead-consent{font-size:11.5px;color:var(--gray);line-height:1.5;margin-top:12px;text-align:center}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:15px 26px;border-radius:999px;font-size:15px;font-weight:500;box-shadow:0 16px 40px rgba(0,0,0,.24);opacity:0;transition:opacity .3s ease,transform .3s ease;z-index:200;max-width:min(90vw,440px);text-align:center;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -182,8 +184,33 @@ const SUPABASE_URL = 'https://onsrefuxmxmauvxmtdmz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_QHyBDY-lzeGwrgTJs7pGyw_A4FArk_D';
 const db = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 let session = null, myProfile = null;
+/* Captured synchronously, before supabase-js's own hash cleanup can beat us to it. */
+const authHashParams = (function(){
+  const h = window.location.hash;
+  if(!h || (!h.includes('access_token=') && !h.includes('type='))) return null;
+  return new URLSearchParams(h.replace(/^#/, ''));
+})();
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 4000);
+}
+function handleAuthRedirect(){
+  if(!authHashParams) return;
+  if(window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
+  if(!session) return;
+  const type = authHashParams.get('type');
+  const msg = type === 'signup' ? 'Email confirmed — welcome to Roomsy! 🎉'
+    : type === 'recovery' ? 'You’re signed in — set a new password anytime in your profile.'
+    : 'Signed in — welcome to Roomsy! 🎉';
+  showToast(msg);
+  go('profile');
+}
 if(db){
-  db.auth.getSession().then(({data}) => { session = data.session; updateAuthNav(); });
+  db.auth.getSession().then(({data}) => { session = data.session; updateAuthNav(); handleAuthRedirect(); });
   db.auth.onAuthStateChange((_e, s2) => { session = s2; updateAuthNav(); });
 }
 function updateAuthNav(){
