@@ -209,25 +209,13 @@ function handleAuthRedirect(){
   showToast(msg);
   go('profile');
 }
-async function learnUserTypeFromProfile(){
-  if(!db || !session || userType) return false;
-  await ensureMyProfile();
-  if(myProfile && myProfile.type && TYPES[myProfile.type]){
-    userType = myProfile.type;
-    try{localStorage.setItem('roomsy_type', userType)}catch(e){}
-    return true;
-  }
-  return false;
-}
+/* Pull-based: userType/location are re-derived from the DB on demand wherever they
+   gate UI (see loadMyTypeAndLocation below), rather than pushed once at auth-init.
+   That push-based approach raced page navigation and localStorage can be unreliable
+   (Safari ITP may partition/deny it on this domain), so the DB stays source of truth. */
 if(db){
-  db.auth.getSession().then(({data}) => {
-    session = data.session; updateAuthNav(); handleAuthRedirect();
-    learnUserTypeFromProfile().then(learned => { if(learned) renderPage(); });
-  });
-  db.auth.onAuthStateChange((_e, s2) => {
-    session = s2; updateAuthNav();
-    if(session) learnUserTypeFromProfile().then(learned => { if(learned) renderPage(); });
-  });
+  db.auth.getSession().then(({data}) => { session = data.session; updateAuthNav(); handleAuthRedirect(); });
+  db.auth.onAuthStateChange((_e, s2) => { session = s2; updateAuthNav(); });
 }
 function updateAuthNav(){
   const b = document.getElementById('nav-auth');
@@ -299,6 +287,9 @@ function shortLocationName(result){
 /* ── State ────────────────────────────────────────────── */
 let page='home', qi=0, scores={}, result=null, filter='all', radiusOnly=false, locBannerDismissed=false;
 let userType=null; try{userType=localStorage.getItem('roomsy_type')||null}catch(e){}
+/* localStorage is just a cache and may be unavailable (Safari ITP etc.) — the DB row
+   fetched by loadMyTypeAndLocation() below is always the source of truth. */
+let myTypeFetchAttempted=false;
 
 /* ── Helpers ──────────────────────────────────────────── */
 const view=document.getElementById('view');
@@ -501,9 +492,37 @@ async function ensureMyProfile(){
   try{ const {data}=await db.from('profiles').select('*').eq('id',session.user.id).maybeSingle(); myProfile=data||{}; }
   catch(e){ myProfile={}; }
 }
+/* Pull-based fix: whatever UI gates on userType calls this instead of trusting a
+   cached/pushed value. Always hits the DB (never assumes localStorage is present or
+   correct), and only marks the attempt "done" once so repeat renders (e.g. clicking
+   a filter chip) don't refetch forever if the profile genuinely has no type yet. */
+async function loadMyTypeAndLocation(){
+  if(!db || !session) return false;
+  try{
+    const {data, error} = await db.from('profiles').select('type,lat,lng,radius_miles').eq('id', session.user.id).maybeSingle();
+    if(error){ console.error('Roomsy: failed to load profile type/location', error); return false; }
+    if(data){
+      myProfile = {...(myProfile||{}), ...data};
+      if(data.type && TYPES[data.type] && !userType){
+        userType = data.type;
+        try{ localStorage.setItem('roomsy_type', userType); }catch(e){}
+        return true;
+      }
+    }
+    return false;
+  }catch(ex){
+    console.error('Roomsy: failed to load profile type/location', ex);
+    return false;
+  }
+}
 function renderBrowse(){
   if(db && session && !realProfiles.length){ loadRealProfiles().then(()=>{ if(page==='browse'&&realProfiles.length)renderBrowse(); }); }
-  if(db && session && !myProfile){ ensureMyProfile().then(()=>{ if(page==='browse')renderBrowse(); }); }
+  if(db && session && userType==null && !myTypeFetchAttempted){
+    myTypeFetchAttempted=true;
+    loadMyTypeAndLocation().then(learned=>{ if(learned && page==='browse') renderBrowse(); });
+  }else if(db && session && !myProfile){
+    ensureMyProfile().then(()=>{ if(page==='browse')renderBrowse(); });
+  }
   const viewerLat=myProfile&&myProfile.lat!=null?myProfile.lat:null;
   const viewerLng=myProfile&&myProfile.lng!=null?myProfile.lng:null;
   const viewerRadius=(myProfile&&myProfile.radius_miles)||25;
@@ -690,8 +709,19 @@ async function renderProfile(){
   if(!session){showAuthModal('signup');renderHome();page='home';updateNav();return}
   view.innerHTML='<div class="wrap"><div class="quiz-shell"><p style="text-align:center;color:var(--gray)">Loading your profile…</p></div></div>';
   let p={};
-  try{const {data}=await db.from('profiles').select('*').eq('id',session.user.id).maybeSingle();p=data||{}}catch(e){}
+  try{
+    const {data,error}=await db.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
+    if(error) console.error('Roomsy: failed to load profile', error);
+    p=data||{};
+  }catch(e){ console.error('Roomsy: failed to load profile', e); }
   myProfile=p;
+  myTypeFetchAttempted=true;
+  /* Pull-based: this fetch already has the freshest type — backfill userType from it
+     so Browse (and anything else gating on userType) doesn't need its own round trip. */
+  if(p.type && TYPES[p.type] && !userType){
+    userType=p.type;
+    try{ localStorage.setItem('roomsy_type', userType); }catch(e){}
+  }
   let pendingLat=p.lat??null, pendingLng=p.lng??null;
   const t=p.type&&TYPES[p.type]?TYPES[p.type]:null;
   const radiusOpts=[5,10,25,50,100];
@@ -789,7 +819,7 @@ async function renderProfile(){
       setTimeout(()=>{btn.disabled=false;btn.textContent='Save profile'},1200);
     }catch(ex){$g('pf-err').textContent=(ex&&ex.message)||'Save failed — try again.';btn.disabled=false;btn.textContent='Save profile'}
   };
-  $g('pf-out').onclick=async()=>{await db.auth.signOut();session=null;realProfiles=[];updateAuthNav();go('home')};
+  $g('pf-out').onclick=async()=>{await db.auth.signOut();session=null;realProfiles=[];myProfile=null;myTypeFetchAttempted=false;updateAuthNav();go('home')};
 }
 function resizeImage(file,max){
   return new Promise((res,rej)=>{
